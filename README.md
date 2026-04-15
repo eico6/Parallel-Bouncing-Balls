@@ -2,6 +2,7 @@
 
 Ask Chat to translate from Java to C++
 
+```
 package com.example;
 
 import com.example.utils.Ball;
@@ -83,3 +84,4 @@ public class Main extends JPanel implements Runnable {
         }
     }
 }
+```
