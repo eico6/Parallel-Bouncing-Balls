@@ -1,6 +1,6 @@
-// #include "ball.h"
+#include "ball.h"
 
-// void Ball::handle_collision(Ball other)
-// {
+void Ball::handle_collision(Ball other)
+{
     
-// }
+}

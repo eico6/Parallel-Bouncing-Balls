@@ -1,15 +1,15 @@
 #include <iostream>
 #include <raylib.h>
 #include "ball.h"
+#include "vector.h"
 
 int main() {
-    InitWindow(800, 600, "Bouncing Ball");
-
-    Vector2 pos = {400, 300};
-    Vector2 vel = {3, 2};
-    float radius = 20;
-
+    InitWindow(1000, 800, "Bouncing Ball");
     SetTargetFPS(60);
+
+    Vector pos = {400, 300};
+    Vector vel = {3, 2};
+    float radius = 20;
 
     while (!WindowShouldClose()) {
         // update
