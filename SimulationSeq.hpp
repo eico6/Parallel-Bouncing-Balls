@@ -30,8 +30,8 @@ struct SimulationSeq {
         }
 
         // collisions
-        for (int i = 0; i < balls.size(); i++) {
-            for (int j = i+1; j < balls.size(); j++) {
+        for (size_t i = 0; i < balls.size(); i++) {
+            for (size_t j = i+1; j < balls.size(); j++) {
                 auto &a = balls[i];
                 auto &b = balls[j];
 
