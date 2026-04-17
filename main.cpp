@@ -1,28 +1,53 @@
-#include <iostream>
-#include <raylib.h>
-#include "ball.h"
-#include "vector.h"
+#include "raylib.h"
+#include "SimulationSeq.hpp"
+#include <vector>
+#include <cstdlib>
+
+Color getColor(int id) {
+    switch (id % 6) {
+        case 0: return RED;
+        case 1: return GREEN;
+        case 2: return BLUE;
+        case 3: return YELLOW;
+        case 4: return ORANGE;
+        case 5: return PURPLE;
+    }
+    return WHITE;
+}
 
 int main() {
-    InitWindow(1000, 800, "Bouncing Ball");
+    InitWindow(1000, 800, "Ball Collision");
     SetTargetFPS(60);
 
-    Vector pos = {400, 300};
-    Vector vel = {3, 2};
-    float radius = 20;
+    Rectangle bounds = {100, 100, 800, 600};
+
+    std::vector<Ball> balls;
+    for (int i = 0; i < 200; i++) {
+        float x = bounds.x + rand() % (int)bounds.width;
+        float y = bounds.y + rand() % (int)bounds.height;
+        balls.emplace_back(i, x, y, 4, 1.0);
+    }
+
+    Grid<std::vector<Ball>> grid(20,20);
+    SimulationSeq sim(bounds, balls, grid);
 
     while (!WindowShouldClose()) {
-        // update
-        pos.x += vel.x;
-        pos.y += vel.y;
 
-        if (pos.x < radius || pos.x > 800 - radius) vel.x *= -1;
-        if (pos.y < radius || pos.y > 600 - radius) vel.y *= -1;
+        sim.update();
 
-        // draw
         BeginDrawing();
-        ClearBackground(RAYWHITE);
-        DrawCircleV(pos, radius, RED);
+        ClearBackground(BLACK);
+
+        DrawRectangleLinesEx(bounds, 2, WHITE);
+
+        DrawFPS(10, 10);
+        DrawText(TextFormat("Balls: %d", (int)balls.size()), 10, 30, 20, WHITE);
+
+        // balls
+        for (auto &b : balls) {
+            DrawCircle(b.position.x, b.position.y, b.radius, getColor(b.id));
+        }
+
         EndDrawing();
     }
 
