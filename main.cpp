@@ -42,10 +42,9 @@ int main() {
 
     double cellWidth  = (double)WIDTH  / COLS;
     double cellHeight = (double)HEIGHT / ROWS;
-    cellWidth = cellHeight = 4 * radius;   // matches Java: cellWidth = cellHeight = 4*radius
+    cellWidth = cellHeight = 4 * radius;
 
     Grid<std::vector<Ball*>> grid(cellWidth, cellHeight);
-    // Pre-populate all cells inside bounds (mirrors Java's grid.getCells(bounds).forEach(...))
     for (const CellKey& cell : grid.getCells(bounds))
         grid.set(cell, {});
 
@@ -53,10 +52,8 @@ int main() {
     View view(simulation);
 
     InitWindow(WIDTH, HEIGHT, "Ball Collision Simulator");
-    // Run the simulation loop at FPS=600, matching Java's View.FPS
     SetTargetFPS(FPS);
 
-    // FPS tracking (mirrors Java View.run())
     int   frames      = 0;
     int   fps         = 0;
     double lastFpsTime = GetTime();

@@ -3,7 +3,6 @@
 #include <vector>
 #include <cmath>
 
-// Key type: integer (x,y) cell coordinate — mirrors Java's java.awt.Point
 struct CellKey {
     int x, y;
     bool operator==(const CellKey& o) const { return x == o.x && y == o.y; }
@@ -11,12 +10,10 @@ struct CellKey {
 
 struct CellKeyHash {
     std::size_t operator()(const CellKey& k) const {
-        // Same mixing as Java's Point.hashCode() isn't required, just stable
         return std::hash<long long>()(((long long)k.x << 32) ^ (unsigned int)k.y);
     }
 };
 
-// Axis-aligned bounding box — mirrors Java's Rectangle2D
 struct Rect {
     double x, y, width, height;
     double getX()    const { return x; }
@@ -27,7 +24,6 @@ struct Rect {
     double getMaxY() const { return y + height; }
 };
 
-// Spatial hash grid — mirrors Java's Grid<E>
 template<typename T>
 class Grid {
 public:
@@ -50,7 +46,6 @@ public:
         return cells;
     }
 
-    // Returns pointer to value, or nullptr if absent (mirrors Java get returning null)
     T* get(const CellKey& cell) {
         auto it = data.find(cell);
         return it != data.end() ? &it->second : nullptr;
@@ -67,13 +62,11 @@ public:
 
     void clear() { data.clear(); }
 
-    // Iterate over values (mirrors Java Iterable<E>)
     auto begin() { return data.begin(); }
     auto end()   { return data.end(); }
     auto begin() const { return data.cbegin(); }
     auto end()   const { return data.cend(); }
 
-    // Iterate over keys (mirrors Java grid.cells())
     std::vector<CellKey> cells() const {
         std::vector<CellKey> keys;
         keys.reserve(data.size());
@@ -81,7 +74,6 @@ public:
         return keys;
     }
 
-    // forEach on values — mirrors Java grid.forEach(Collection::clear)
     template<typename Fn>
     void forEach(Fn fn) {
         for (auto& kv : data) fn(kv.second);

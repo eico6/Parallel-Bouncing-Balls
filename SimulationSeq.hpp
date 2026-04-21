@@ -22,8 +22,6 @@ public:
     }
 
     void update() {
-        // Clear grid and checked-pairs — mirrors Java:
-        //   grid.clear(); grid.forEach(Collection::clear); checkedPairs.values().forEach(Collection::clear);
         grid.clear();
         for (auto& kv : checkedPairs) kv.second.clear();
 
@@ -51,7 +49,6 @@ public:
     const Grid<std::vector<Ball*>>& getGrid() const { return grid; }
 
 private:
-    // checkedPairs mirrors Java: Map<Ball, Set<Ball>>
     std::unordered_map<Ball*, std::unordered_set<Ball*>> checkedPairs;
 
     void On() {
@@ -75,7 +72,6 @@ private:
         }
     }
 
-    // Brute-force O(n²) alternative — mirrors Java On2()
     void On2() {
         for (int i = 0; i < (int)balls.size(); i++) {
             Ball& a = balls[i];
