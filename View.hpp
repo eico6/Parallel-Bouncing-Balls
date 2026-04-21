@@ -32,7 +32,7 @@ public:
         drawBalls();
 
         // Uncomment to draw grid:
-        // drawGrid();
+        drawGrid();
 
         DrawText(TextFormat("Target FPS: %d", FPS), 10, 20, 20, WHITE);
         DrawText(TextFormat("FPS: %d", fps), 10, 40, 20, WHITE);

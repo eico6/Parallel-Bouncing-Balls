@@ -22,8 +22,8 @@ static std::vector<Ball> spawnBalls(int n, double radius, const Rect& bounds) {
 
         Ball b(x, y, radius, 1.0);
         b.velocity = {
-            ((double)rand() / RAND_MAX - 0.5) * 10000,
-            ((double)rand() / RAND_MAX - 0.5) * 10000
+            ((double)rand() / RAND_MAX - 0.5) * 1000,
+            ((double)rand() / RAND_MAX - 0.5) * 1000
         };
         balls.push_back(b);
     }
@@ -35,7 +35,7 @@ int main() {
 
     Rect bounds = {0, 0, WIDTH, HEIGHT};
 
-    int    n      = 4000;
+    int    n      = 1000;
     double radius = 1.0;
 
     std::vector<Ball> balls = spawnBalls(n, radius, bounds);
