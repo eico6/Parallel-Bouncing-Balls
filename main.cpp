@@ -1,55 +1,80 @@
 #include "raylib.h"
+#include "Ball.hpp"
+#include "Grid.hpp"
 #include "SimulationSeq.hpp"
+#include "View.hpp"
+
 #include <vector>
 #include <cstdlib>
+#include <cmath>
 
-Color getColor(int id) {
-    switch (id % 6) {
-        case 0: return RED;
-        case 1: return GREEN;
-        case 2: return BLUE;
-        case 3: return YELLOW;
-        case 4: return ORANGE;
-        case 5: return PURPLE;
+static const int ROWS = 12 * 2;
+static const int COLS = 16 * 2;
+static const int WIDTH  = 960;
+static const int HEIGHT = 720;
+
+static std::vector<Ball> spawnBalls(int n, double radius, const Rect& bounds) {
+    std::vector<Ball> balls;
+    balls.reserve(n);
+    for (int i = 0; i < n; i++) {
+        double x = bounds.getX() + (double)rand() / RAND_MAX * bounds.getWidth();
+        double y = bounds.getY() + (double)rand() / RAND_MAX * bounds.getHeight();
+
+        Ball b(x, y, radius, 1.0);
+        b.velocity = {
+            ((double)rand() / RAND_MAX - 0.5) * 10000,
+            ((double)rand() / RAND_MAX - 0.5) * 10000
+        };
+        balls.push_back(b);
     }
-    return WHITE;
+    return balls;
 }
 
 int main() {
-    InitWindow(1000, 800, "Ball Collision");
-    SetTargetFPS(60);
+    double gravity = 0;
 
-    Rectangle bounds = {100, 100, 800, 600};
+    Rect bounds = {0, 0, WIDTH, HEIGHT};
 
-    std::vector<Ball> balls;
-    for (int i = 0; i < 200; i++) {
-        float x = bounds.x + rand() % (int)bounds.width;
-        float y = bounds.y + rand() % (int)bounds.height;
-        balls.emplace_back(i, x, y, 4, 1.0);
-    }
+    int    n      = 4000;
+    double radius = 1.0;
 
-    Grid<std::vector<Ball>> grid(20,20);
-    SimulationSeq sim(bounds, balls, grid);
+    std::vector<Ball> balls = spawnBalls(n, radius, bounds);
+
+    double cellWidth  = (double)WIDTH  / COLS;
+    double cellHeight = (double)HEIGHT / ROWS;
+    cellWidth = cellHeight = 4 * radius;   // matches Java: cellWidth = cellHeight = 4*radius
+
+    Grid<std::vector<Ball*>> grid(cellWidth, cellHeight);
+    // Pre-populate all cells inside bounds (mirrors Java's grid.getCells(bounds).forEach(...))
+    for (const CellKey& cell : grid.getCells(bounds))
+        grid.set(cell, {});
+
+    SimulationSeq simulation(gravity, bounds, balls, grid);
+    View view(simulation);
+
+    InitWindow(WIDTH, HEIGHT, "Ball Collision Simulator");
+    // Run the simulation loop at FPS=600, matching Java's View.FPS
+    SetTargetFPS(FPS);
+
+    // FPS tracking (mirrors Java View.run())
+    int   frames      = 0;
+    int   fps         = 0;
+    double lastFpsTime = GetTime();
 
     while (!WindowShouldClose()) {
+        simulation.update();
 
-        sim.update();
-
-        BeginDrawing();
-        ClearBackground(BLACK);
-
-        DrawRectangleLinesEx(bounds, 2, WHITE);
-
-        DrawFPS(10, 10);
-        DrawText(TextFormat("Balls: %d", (int)balls.size()), 10, 30, 20, WHITE);
-
-        // balls
-        for (auto &b : balls) {
-            DrawCircle(b.position.x, b.position.y, b.radius, getColor(b.id));
+        frames++;
+        double now = GetTime();
+        if (now - lastFpsTime >= 1.0) {
+            fps        = frames;
+            frames     = 0;
+            lastFpsTime = now;
         }
 
-        EndDrawing();
+        view.draw(fps);
     }
 
     CloseWindow();
+    return 0;
 }

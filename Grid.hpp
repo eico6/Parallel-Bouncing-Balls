@@ -1,17 +1,92 @@
 #pragma once
+#include <unordered_map>
 #include <vector>
+#include <cmath>
 
+// Key type: integer (x,y) cell coordinate — mirrors Java's java.awt.Point
+struct CellKey {
+    int x, y;
+    bool operator==(const CellKey& o) const { return x == o.x && y == o.y; }
+};
+
+struct CellKeyHash {
+    std::size_t operator()(const CellKey& k) const {
+        // Same mixing as Java's Point.hashCode() isn't required, just stable
+        return std::hash<long long>()(((long long)k.x << 32) ^ (unsigned int)k.y);
+    }
+};
+
+// Axis-aligned bounding box — mirrors Java's Rectangle2D
+struct Rect {
+    double x, y, width, height;
+    double getX()    const { return x; }
+    double getY()    const { return y; }
+    double getWidth()  const { return width; }
+    double getHeight() const { return height; }
+    double getMaxX() const { return x + width; }
+    double getMaxY() const { return y + height; }
+};
+
+// Spatial hash grid — mirrors Java's Grid<E>
 template<typename T>
-struct Grid {
-    int r, c;
-    std::vector<std::vector<T>> data;
+class Grid {
+public:
+    const double cellWidth, cellHeight;
 
-    Grid(int rows, int cols) : r(rows), c(cols),
-        data(rows, std::vector<T>(cols)) {}
+    Grid(double cellWidth, double cellHeight)
+        : cellWidth(cellWidth), cellHeight(cellHeight) {}
 
-    int rows() const { return r; }
-    int cols() const { return c; }
+    // Returns all cell keys covered by rectangle r
+    std::vector<CellKey> getCells(const Rect& r) const {
+        int x1 = (int)std::floor(r.getX()    / cellWidth);
+        int y1 = (int)std::floor(r.getY()    / cellHeight);
+        int x2 = (int)std::ceil (r.getMaxX() / cellWidth);
+        int y2 = (int)std::ceil (r.getMaxY() / cellHeight);
 
-    T& get(int i, int j) { return data[i][j]; }
-    void set(int i, int j, T val) { data[i][j] = val; }
+        std::vector<CellKey> cells;
+        for (int x = x1; x < x2; x++)
+            for (int y = y1; y < y2; y++)
+                cells.push_back({x, y});
+        return cells;
+    }
+
+    // Returns pointer to value, or nullptr if absent (mirrors Java get returning null)
+    T* get(const CellKey& cell) {
+        auto it = data.find(cell);
+        return it != data.end() ? &it->second : nullptr;
+    }
+
+    T& getOrDefault(const CellKey& cell, T& defaultValue) {
+        auto it = data.find(cell);
+        return it != data.end() ? it->second : defaultValue;
+    }
+
+    void set(const CellKey& cell, T val) {
+        data[cell] = std::move(val);
+    }
+
+    void clear() { data.clear(); }
+
+    // Iterate over values (mirrors Java Iterable<E>)
+    auto begin() { return data.begin(); }
+    auto end()   { return data.end(); }
+    auto begin() const { return data.cbegin(); }
+    auto end()   const { return data.cend(); }
+
+    // Iterate over keys (mirrors Java grid.cells())
+    std::vector<CellKey> cells() const {
+        std::vector<CellKey> keys;
+        keys.reserve(data.size());
+        for (auto& kv : data) keys.push_back(kv.first);
+        return keys;
+    }
+
+    // forEach on values — mirrors Java grid.forEach(Collection::clear)
+    template<typename Fn>
+    void forEach(Fn fn) {
+        for (auto& kv : data) fn(kv.second);
+    }
+
+private:
+    std::unordered_map<CellKey, T, CellKeyHash> data;
 };
