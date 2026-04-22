@@ -1,17 +1,15 @@
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Run app",
-      "type": "cppdbg",
-      "request": "launch",
-      "program": "${workspaceFolder}/app.exe",
-      "args": [],
-      "cwd": "${workspaceFolder}",
-      "stopAtEntry": false,
-      "externalConsole": true,
-      "MIMode": "gdb",
-      "preLaunchTask": "build"
-    }
-  ]
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run raylib app",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/app",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build raylib",
+            "MIMode": "lldb"
+        }
+    ]
 }

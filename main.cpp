@@ -41,18 +41,12 @@ int main() {
     Rect bounds = {0, 0, WIDTH, HEIGHT};
 
     
-    int    n      = 1000;
-    double radius = 1.0;
-    printf("How many balls?\n");
-    scanf("%d", &n);
-    printf("What's the radius?\n");
-    scanf("%lf", &radius);
-    
-    for (size_t i = 0; i < 100; i++)
-    {
-        printf("%d\n", omp_get_thread_num());
-    }
-    
+    int    n      = 100;
+    double radius = 10;
+    // printf("How many balls?\n");
+    // scanf("%d", &n);
+    // printf("What's the radius?\n");
+    // scanf("%lf", &radius);
 
     std::vector<Ball> balls = spawnBalls(n, radius, bounds);
 
@@ -64,6 +58,7 @@ int main() {
     for (const CellKey& cell : grid.getCells(bounds))
         grid.set(cell, {});
 
+    // SimulationSeq simulation(gravity, bounds, balls, grid);
     SimulationPar simulation(gravity, bounds, balls, grid);
     View view(simulation);
 
@@ -83,6 +78,7 @@ int main() {
             fps        = frames;
             frames     = 0;
             lastFpsTime = now;
+            // printf("fps = %d\n", fps);
         }
 
         view.draw(fps);

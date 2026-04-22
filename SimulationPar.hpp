@@ -30,37 +30,41 @@ public:
         }
 
         #pragma omp parallel for
-        for (size_t i = 0; i < balls.size(); i++){
-            Ball &b = balls[i];
-
+        for (Ball& b : balls){
             b.velocity = b.velocity.add(0, gravity / FPS);
             b.position = b.position.add(Vector::div(b.velocity, FPS));
-
+            
             resolveWallCollision(b);
         }
+        
+        #pragma omp parallel for
+        for (Ball& b : balls){
+            addToGrid(b);
+        }
+        
+        std::vector<CellKey> cells = grid.cells();
 
-        // for (Ball& b : balls){
-        //     addToGrid(b);
-        // }
-
-        // for (auto& kv : grid) {
-        //     std::vector<Ball*>& cell = kv.second;
-        //     for (int i = 0; i < (int)cell.size(); i++) {
-        //         Ball* a = cell[i];
-        //         for (int j = i + 1; j < (int)cell.size(); j++) {
-        //             Ball* b = cell[j];
-        //             if (checkedPairs[a].count(b)){
-        //                 continue;
-        //             }
-        //             if (a->overlaps(*b)) {
-        //                 checkedPairs[a].insert(b);
-        //                 checkedPairs[b].insert(a);
-        //                 resolveOverlap(*a, *b);
-        //                 resolveCollision(*a, *b);
-        //             }
-        //         }
-        //     }
-        // }
+        // #pragma omp parallel for
+        for (auto& cell : cells) {
+///////////////////////////////////////////
+            std::vector<Ball*>& list = grid.get(cell);
+            
+            for (int i = 0; i < (int)list.size(); i++) {
+                Ball* a = list[i];
+                for (int j = i + 1; j < (int)list.size(); j++) {
+                    Ball* b = list[j];
+                    if (checkedPairs[a].count(b)){
+                        continue;
+                    }
+                    if (a->overlaps(*b)) {
+                        checkedPairs[a].insert(b);
+                        checkedPairs[b].insert(a);
+                        resolveOverlap(*a, *b);
+                        resolveCollision(*a, *b);
+                    }
+                }
+            }
+        }
     }
 
     const Rect& getBounds() const override { return bounds; }
