@@ -38,6 +38,10 @@ int main() {
 
     int    n      = 1000;
     double radius = 1.0;
+    printf("How many balls?\n");
+    scanf("%d", &n);
+    printf("What's the radius?\n");
+    scanf("%lf", &radius);
 
     std::vector<Ball> balls = spawnBalls(n, radius, bounds);
 
