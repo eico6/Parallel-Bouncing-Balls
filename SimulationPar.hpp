@@ -12,11 +12,11 @@ public:
     const double gravity;
     const Rect bounds;
     std::vector<Ball>& balls;
-    Grid<std::vector<Ball*>>& grid;
+    Grid& grid;
 
     SimulationPar(double gravity, Rect bounds,
                   std::vector<Ball>& balls,
-                  Grid<std::vector<Ball*>>& grid)
+                  Grid& grid)
         : gravity(gravity), bounds(bounds), balls(balls), grid(grid)
     {
         for (Ball& b : balls)
@@ -29,7 +29,7 @@ public:
             kv.second.clear();
         }
 
-        #pragma omp parallel for
+        #pragma omp parallel for // SAFE PARALLELIZATION
         for (Ball& b : balls){
             b.velocity = b.velocity.add(0, gravity / FPS);
             b.position = b.position.add(Vector::div(b.velocity, FPS));
@@ -37,17 +37,18 @@ public:
             resolveWallCollision(b);
         }
         
-        #pragma omp parallel for
+        // UNSAFE PARALLELIZATION: grid has shared state
+        // #pragma omp parallel for 
         for (Ball& b : balls){
             addToGrid(b);
         }
         
         std::vector<CellKey> cells = grid.cells();
 
-        // #pragma omp parallel for
+        // #pragma omp parallel for // UNSAFE PARALLELIZATION: checkedPairs and ball state are shared
         for (auto& cell : cells) {
-///////////////////////////////////////////
-            std::vector<Ball*>& list = grid.get(cell);
+            std::vector<Ball*> empty;
+            std::vector<Ball*>& list = grid.getOrDefault(cell, empty);
             
             for (int i = 0; i < (int)list.size(); i++) {
                 Ball* a = list[i];
@@ -69,7 +70,7 @@ public:
 
     const Rect& getBounds() const override { return bounds; }
     std::vector<Ball>& getBalls() override { return balls; }
-    const Grid<std::vector<Ball*>>& getGrid() const override { return grid; }
+    const Grid& getGrid() const override { return grid; }
 
 private:
     std::unordered_map<Ball*, std::unordered_set<Ball*>> checkedPairs;

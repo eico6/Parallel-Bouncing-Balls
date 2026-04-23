@@ -1,4 +1,5 @@
 #pragma once
+#include "Ball.hpp"
 #include <unordered_map>
 #include <vector>
 #include <cmath>
@@ -24,7 +25,6 @@ struct Rect {
     double getMaxY() const { return y + height; }
 };
 
-template<typename T>
 class Grid {
 public:
     const double cellWidth, cellHeight;
@@ -46,17 +46,17 @@ public:
         return cells;
     }
 
-    T* get(const CellKey& cell) {
+    std::vector<Ball*>* get(const CellKey& cell) {
         auto it = data.find(cell);
         return it != data.end() ? &it->second : nullptr;
     }
 
-    T& getOrDefault(const CellKey& cell, T& defaultValue) {
+    std::vector<Ball*>& getOrDefault(const CellKey& cell, std::vector<Ball*>& defaultValue) {
         auto it = data.find(cell);
         return it != data.end() ? it->second : defaultValue;
     }
 
-    void set(const CellKey& cell, T val) {
+    void set(const CellKey& cell, std::vector<Ball*> val) {
         data[cell] = std::move(val);
     }
 
@@ -80,5 +80,5 @@ public:
     }
 
 private:
-    std::unordered_map<CellKey, T, CellKeyHash> data;
+    std::unordered_map<CellKey, std::vector<Ball*>, CellKeyHash> data;
 };

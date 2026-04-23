@@ -11,11 +11,11 @@ public:
     const double gravity;
     const Rect bounds;
     std::vector<Ball>& balls;
-    Grid<std::vector<Ball*>>& grid;
+    Grid& grid;
 
     SimulationSeq(double gravity, Rect bounds,
                   std::vector<Ball>& balls,
-                  Grid<std::vector<Ball*>>& grid)
+                  Grid& grid)
         : gravity(gravity), bounds(bounds), balls(balls), grid(grid)
     {
         for (Ball& b : balls)
@@ -47,7 +47,7 @@ public:
 
     const Rect& getBounds() const override { return bounds; }
     std::vector<Ball>& getBalls() override { return balls; }
-    const Grid<std::vector<Ball*>>& getGrid() const override { return grid; }
+    const Grid& getGrid() const override { return grid; }
 
 private:
     std::unordered_map<Ball*, std::unordered_set<Ball*>> checkedPairs;
