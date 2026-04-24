@@ -38,10 +38,13 @@ public:
         }
         
         // UNSAFE PARALLELIZATION: grid has shared state
-        // #pragma omp parallel for 
-        // for (Ball& b : balls){
-        //     addToGrid(b);
-        // }
+        #pragma omp parallel
+        {
+        }
+        #pragma omp parallel for
+        for (Ball& b : balls){
+            addToGrid(b);
+        }
         
         // std::vector<CellKey> cells = grid.cells();
 
