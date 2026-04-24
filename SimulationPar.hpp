@@ -19,8 +19,15 @@ public:
                   Grid& grid)
         : gravity(gravity), bounds(bounds), balls(balls), grid(grid)
     {
-        for (Ball& b : balls)
+        for (Ball& b : balls){
             checkedPairs[&b] = {};
+        }
+
+        for(const CellKey& cell : grid.getCells(bounds)){
+            omp_lock_t *lock = new omp_lock_t;
+            omp_init_lock(lock);
+            locks[cell] = lock;
+        }
     }
 
     void update() {
@@ -38,9 +45,6 @@ public:
         }
         
         // UNSAFE PARALLELIZATION: grid has shared state
-        #pragma omp parallel
-        {
-        }
         #pragma omp parallel for
         for (Ball& b : balls){
             addToGrid(b);
@@ -76,6 +80,7 @@ public:
 
 private:
     std::unordered_map<Ball*, std::unordered_set<Ball*>> checkedPairs;
+    std::unordered_map<CellKey, omp_lock_t*, CellKeyHash> locks;
 
     void addToGrid(Ball& b) {
         Rect ballBounds = {
@@ -85,9 +90,19 @@ private:
             2 * b.radius
         };
         for (const CellKey& cell : grid.getCells(ballBounds)) {
-            if (grid.get(cell) == nullptr)
+            omp_lock_t *lock = locks[cell];
+            omp_set_lock(lock);
+            
+            #pragma omp critical
+            {
+
+                // these three lines creates segmentation fault now 
+                if (grid.get(cell) == nullptr)
                 grid.set(cell, {});
-            grid.get(cell)->push_back(&b);
+                grid.get(cell)->push_back(&b);
+            }
+            
+            omp_unset_lock(lock);
         }
     }
 

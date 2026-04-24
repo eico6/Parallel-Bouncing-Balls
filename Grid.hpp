@@ -18,7 +18,7 @@ struct CellKeyHash {
 struct Rect {
     double x, y, width, height;
     double getX()    const { return x; }
-    double getY()    const { return y; }
+    double getY()    const { return y; }            
     double getWidth()  const { return width; }
     double getHeight() const { return height; }
     double getMaxX() const { return x + width; }
