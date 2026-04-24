@@ -3,7 +3,7 @@
 #include "Constants.hpp"
 
 struct Ball {
-    static int nextID;
+    inline static int nextID = 0;
     int id;
     Vector position;
     Vector velocity;
@@ -30,5 +30,3 @@ struct Ball {
         return dx * dx + dy * dy <= rSum * rSum;
     }
 };
-
-int Ball::nextID = 0;

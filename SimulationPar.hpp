@@ -36,6 +36,11 @@ public:
             kv.second.clear();
         }
 
+        // Pre-populate all cells BEFORE going parallel
+        for (const CellKey& cell : grid.getCells(bounds)) {
+            grid.set(cell, {});  // inserts key, no rehash will happen in parallel
+        }
+
         #pragma omp parallel for // SAFE PARALLELIZATION
         for (Ball& b : balls){
             b.velocity = b.velocity.add(0, gravity / FPS);
@@ -90,19 +95,15 @@ private:
             2 * b.radius
         };
         for (const CellKey& cell : grid.getCells(ballBounds)) {
-            omp_lock_t *lock = locks[cell];
-            omp_set_lock(lock);
-            
-            #pragma omp critical
-            {
+            auto it = locks.find(cell);
 
-                // these three lines creates segmentation fault now 
-                if (grid.get(cell) == nullptr)
-                grid.set(cell, {});
-                grid.get(cell)->push_back(&b);
-            }
+            // cell not pre-registered = skip
+            // - this can occur when ballBounds retrieves cells outside of the grid
+            if (it == locks.end()) continue; 
             
-            omp_unset_lock(lock);
+            omp_set_lock(it->second);
+            grid.get(cell)->push_back(&b);
+            omp_unset_lock(it->second);
         }
     }
 
