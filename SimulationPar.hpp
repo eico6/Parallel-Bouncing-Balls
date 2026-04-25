@@ -31,14 +31,11 @@ public:
     }
 
     void update() {
-        grid.clear();
-        for (auto& kv : checkedPairs){
+        for (auto& kv : grid){
             kv.second.clear();
         }
-
-        // Pre-populate all cells BEFORE going parallel
-        for (const CellKey& cell : grid.getCells(bounds)) {
-            grid.set(cell, {});  // inserts key, no rehash will happen in parallel
+        for (auto& kv : checkedPairs){
+            kv.second.clear();
         }
 
         #pragma omp parallel for // SAFE PARALLELIZATION
@@ -47,11 +44,7 @@ public:
             b.position = b.position.add(Vector::div(b.velocity, FPS));
             
             resolveWallCollision(b);
-        }
-        
-        // UNSAFE PARALLELIZATION: grid has shared state
-        #pragma omp parallel for
-        for (Ball& b : balls){
+            
             addToGrid(b);
         }
         
