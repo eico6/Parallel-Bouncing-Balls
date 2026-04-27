@@ -19,8 +19,13 @@ public:
                   Grid& grid)
         : gravity(gravity), bounds(bounds), balls(balls), grid(grid)
     {
+        for (auto& kv : grid){
+            cellLists.push_back(&kv.second);
+        }
+
         for (Ball& b : balls){
             checkedPairs[&b] = {};
+            pairSets.push_back(&checkedPairs[&b]);
         }
 
         for(const CellKey& cell : grid.getCells(bounds)){
@@ -31,13 +36,16 @@ public:
     }
 
     void update() {
-        for (auto& kv : grid){
-            kv.second.clear();
+        #pragma omp parallel for
+        for (auto list : cellLists) {
+            list->clear();
         }
-        for (auto& kv : checkedPairs){
-            kv.second.clear();
-        }
+        #pragma omp parallel for
+        for (auto set : pairSets) {
+            set->clear();
 
+        }
+        
         #pragma omp parallel for // SAFE PARALLELIZATION
         for (Ball& b : balls){
             b.velocity = b.velocity.add(0, gravity / FPS);
@@ -48,28 +56,26 @@ public:
             addToGrid(b);
         }
         
-        // std::vector<CellKey> cells = grid.cells();
-
-        // // #pragma omp parallel for // UNSAFE PARALLELIZATION: checkedPairs and ball state are shared
-        // for (auto& cell : cells) {
-        //     std::vector<Ball*>& list = *grid.get(cell);
-            
-        //     for (int i = 0; i < (int)list.size(); i++) {
-        //         Ball* a = list[i];
-        //         for (int j = i + 1; j < (int)list.size(); j++) {
-        //             Ball* b = list[j];
-        //             if (checkedPairs[a].count(b)){
-        //                 continue;
-        //             }
-        //             if (a->overlaps(*b)) {
-        //                 checkedPairs[a].insert(b);
-        //                 checkedPairs[b].insert(a);
-        //                 resolveOverlap(*a, *b);
-        //                 resolveCollision(*a, *b);
-        //             }
-        //         }
-        //     }
-        // }
+        #pragma omp parallel for // How to parallelize this
+        for (auto& list : cellLists) {
+            for (int i = 0; i < (int)list->size(); i++) {
+                Ball* a = list->at(i);
+                for (int j = i + 1; j < (int)list->size(); j++) {
+                    Ball* b = list->at(j);
+                    if (a->overlaps(*b)) {
+                        #pragma omp critical
+                        {
+                            if (!checkedPairs[a].count(b)){
+                                checkedPairs[a].insert(b);
+                                checkedPairs[b].insert(a);
+                                resolveOverlap(*a, *b);
+                                resolveCollision(*a, *b);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     const Rect& getBounds() const override { return bounds; }
@@ -79,6 +85,8 @@ public:
 private:
     std::unordered_map<Ball*, std::unordered_set<Ball*>> checkedPairs;
     std::unordered_map<CellKey, omp_lock_t*, CellKeyHash> locks;
+    std::vector<std::vector<Ball*>*> cellLists;
+    std::vector<std::unordered_set<Ball*>*> pairSets;
 
     void addToGrid(Ball& b) {
         Rect ballBounds = {
