@@ -90,12 +90,6 @@ int main() {
             printf("collision time = \t%lf\n", simulation.collisionTime);
             double totalTime = simulation.collisionTime + simulation.addToGridTime + simulation.collisionTime;
             printf("total time = \t\t%lf\n\n", totalTime);
-
-            FILE* csv = fopen("sim_seq.csv", "w");
-            fprintf(csv, "Balls,Time,Clear time,Add to grid time,Collision time\n");
-            fprintf(csv, "%d,%f,%f,%f,%f\n", n, totalTime, simulation.clearTime, simulation.addToGridTime, simulation.collisionTime);
-            fflush(csv);
-            fclose(csv);
         }
 
         // view.draw(fps);
