@@ -21,17 +21,21 @@ public:
                   Grid& grid)
         : gravity(gravity), bounds(bounds), balls(balls), grid(grid)
     {
-        for (Ball& b : balls)
-            checkedPairs[&b] = {};
+        for (auto& kv : grid){
+            cellLists.push_back(&kv.second);
+        }
+        for (Ball& b : balls){
+            checkedPairs.push_back(new std::unordered_set<Ball*>);
+        }
     }
 
     void update() {
         clearTime = omp_get_wtime();
-        for (auto& kv : grid){
-            kv.second.clear();
+        for (std::vector<Ball*>* list : cellLists) {
+            list->clear();
         }
-        for (auto& kv : checkedPairs) {
-            kv.second.clear();
+        for (std::unordered_set<Ball*>* set : checkedPairs) {
+            set->clear();
         }
         clearTime = omp_get_wtime() - clearTime;
         
@@ -47,16 +51,15 @@ public:
         addToGridTime = omp_get_wtime() - addToGridTime;
         
         collisionTime = omp_get_wtime();
-        for (auto& kv : grid) {
-            std::vector<Ball*>& cell = kv.second;
-            for (int i = 0; i < (int)cell.size(); i++) {
-                Ball* a = cell[i];
-                for (int j = i + 1; j < (int)cell.size(); j++) {
-                    Ball* b = cell[j];
+        for (std::vector<Ball*>* list : cellLists) {
+            for (int i = 0; i < (int)list->size(); i++) {
+                Ball* a = list->at(i);
+                for (int j = i+1; j < (int)list->size(); j++) {
+                    Ball* b = list->at(j);
                     if (a->overlaps(*b)) {
-                        if (!checkedPairs[a].count(b)){
-                            checkedPairs[a].insert(b);
-                            checkedPairs[b].insert(a);
+                        if (!checkedPairs[a->id]->count(b)){
+                            checkedPairs[a->id]->insert(b);
+                            checkedPairs[b->id]->insert(a);
                             resolveOverlap(*a, *b);
                             resolveCollision(*a, *b);
                         }
@@ -72,7 +75,8 @@ public:
     const Grid& getGrid() const override { return grid; }
 
 private:
-    std::unordered_map<Ball*, std::unordered_set<Ball*>> checkedPairs;
+    std::vector<std::unordered_set<Ball*>*> checkedPairs;
+    std::vector<std::vector<Ball*>*> cellLists;
 
     void addToGrid(Ball& b) {
         Rect ballBounds = {

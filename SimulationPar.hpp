@@ -3,6 +3,7 @@
 #include "Grid.hpp"
 #include "Simulation.hpp"
 #include <omp.h>
+#include <iostream>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
@@ -25,11 +26,18 @@ public:
             cellLists.push_back(&kv.second);
         }
 
-        for (Ball& b : balls){
-            checkedPairs[&b] = {};
-            pairSets.push_back(&checkedPairs[&b]);
-        }
+        ballLocks.reserve(balls.size());
+        checkedPairs.reserve(balls.size());
+        for (int i = 0; i < balls.size(); i++){
+            Ball& a = balls[i];
 
+            omp_lock_t *lock = new omp_lock_t;
+            omp_init_lock(lock);
+            ballLocks.push_back(lock);
+            
+            checkedPairs.push_back(new std::unordered_set<Ball*>);
+        }
+        
         for(const CellKey& cell : grid.getCells(bounds)){
             omp_lock_t *lock = new omp_lock_t;
             omp_init_lock(lock);
@@ -40,17 +48,17 @@ public:
     void update() {
         clearTime = omp_get_wtime();
         #pragma omp parallel for
-        for (auto list : cellLists) {
+        for (std::vector<Ball*>* list : cellLists) {
             list->clear();
         }
         #pragma omp parallel for
-        for (auto set : pairSets) {
+        for (std::unordered_set<Ball*>* set : checkedPairs) {
             set->clear();
         }
         clearTime = omp_get_wtime() - clearTime;
 
         addToGridTime = omp_get_wtime();
-        #pragma omp parallel for // SAFE PARALLELIZATION
+        #pragma omp parallel for
         for (Ball& b : balls){
             b.velocity = b.velocity.add(0, gravity / FPS);
             b.position = b.position.add(Vector::div(b.velocity, FPS));
@@ -62,22 +70,28 @@ public:
         addToGridTime = omp_get_wtime() - addToGridTime;
         
         collisionTime = omp_get_wtime();
-        #pragma omp parallel for // How to parallelize this
-        for (auto& list : cellLists) {
+        #pragma omp parallel for
+        for (std::vector<Ball*>* list : cellLists) {
             for (int i = 0; i < (int)list->size(); i++) {
                 Ball* a = list->at(i);
-                for (int j = i + 1; j < (int)list->size(); j++) {
+                for (int j = i+1; j < (int)list->size(); j++) {
                     Ball* b = list->at(j);
                     if (a->overlaps(*b)) {
-                        #pragma omp critical
-                        {
-                            if (!checkedPairs[a].count(b)){
-                                checkedPairs[a].insert(b);
-                                checkedPairs[b].insert(a);
-                                resolveOverlap(*a, *b);
-                                resolveCollision(*a, *b);
-                            }
+                        omp_lock_t* lockA = ballLocks[a->id];
+                        omp_lock_t* lockB = ballLocks[b->id];
+
+                        omp_set_lock(lockA);
+                        omp_set_lock(lockB);
+                        
+                        if (!checkedPairs[a->id]->count(b)){
+                            checkedPairs[a->id]->insert(b);
+                            checkedPairs[b->id]->insert(a);
+                            resolveOverlap(*a, *b);
+                            resolveCollision(*a, *b);
                         }
+                        
+                        omp_unset_lock(lockA);
+                        omp_unset_lock(lockB);
                     }
                 }
             }
@@ -90,10 +104,12 @@ public:
     const Grid& getGrid() const override { return grid; }
 
 private:
-    std::unordered_map<Ball*, std::unordered_set<Ball*>> checkedPairs;
     std::unordered_map<CellKey, omp_lock_t*, CellKeyHash> locks;
+
+    std::vector<std::unordered_set<Ball*>*> checkedPairs;
+    std::vector<omp_lock_t*> ballLocks;
+
     std::vector<std::vector<Ball*>*> cellLists;
-    std::vector<std::unordered_set<Ball*>*> pairSets;
 
     void addToGrid(Ball& b) {
         Rect ballBounds = {
