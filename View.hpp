@@ -32,7 +32,7 @@ public:
         drawBalls();
         
         // Uncomment to draw grid:
-        drawGrid();
+        // drawGrid();
         
         #pragma omp parallel
         {

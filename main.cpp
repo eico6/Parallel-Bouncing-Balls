@@ -36,18 +36,18 @@ static std::vector<Ball> spawnBalls(int n, double radius, const Rect& bounds) {
 export OMP_NUM_THREADS=?
 */
 int main() {
-    double gravity = 0;
+    double gravity = 900;
 
     Rect bounds = {0, 0, WIDTH, HEIGHT};
 
     
-    int    n      = 10000;
+    int    n      = 100;
     double radius = 1.0;
     int num_threads = 1;
-    // printf("How many balls?\n");
-    // scanf("%d", &n);
-    // printf("What's the radius?\n");
-    // scanf("%lf", &radius);
+    printf("How many balls?\n");
+    scanf("%d", &n);
+    printf("What's the radius?\n");
+    scanf("%lf", &radius);
     printf("How many threads?\n");
     scanf("%d", &num_threads);
 
@@ -63,8 +63,8 @@ int main() {
     for (const CellKey& cell : grid.getCells(bounds))
         grid.set(cell, {});
 
-    SimulationSeq simulation(gravity, bounds, balls, grid);
-    // SimulationPar simulation(gravity, bounds, balls, grid);
+    // SimulationSeq simulation(gravity, bounds, balls, grid);
+    SimulationPar simulation(gravity, bounds, balls, grid);
     View view(simulation);
 
     InitWindow(WIDTH, HEIGHT, "Ball Collision Simulator");
@@ -92,7 +92,7 @@ int main() {
             printf("total time = \t\t%lf\n\n", totalTime);
         }
 
-        // view.draw(fps);
+        view.draw(fps);
     }
 
     CloseWindow();
